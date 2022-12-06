@@ -7,6 +7,10 @@ import {
   addDoc,
   Timestamp,
   orderBy,
+  setDoc,
+  doc,
+  getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db, storage } from "../../firebase";
 import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
@@ -20,12 +24,29 @@ const Home = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState("");
   const [messages, setMessages] = useState([]);
+  console.log("👍", users);
 
   const user1 = auth.currentUser.uid;
 
-  const selectUser = (user) => {
+  useEffect(() => {
+    const userRef = collection(db, "users");
+    // q entire user collection execpt current logged in user
+    const q = query(userRef, where("uid", "not-in", [user1]));
+
+    const snap = onSnapshot(q, (qSnapshot) => {
+      let users = [];
+      qSnapshot.forEach((doc) => {
+        users.push(doc.data());
+        setUsers(users);
+      });
+    });
+    return () => snap();
+
+    // eslint-disable-next-line
+  }, []);
+
+  const selectUser = async (user) => {
     setChat(user);
-    console.log(user);
 
     const user2 = user.uid;
     const id = user1 > user2 ? `${user1 + user2}` : `${user2 + user1}`;
@@ -34,13 +55,23 @@ const Home = () => {
     const msgsRef = collection(db, "messages", id, "chat");
     const q = query(msgsRef, orderBy("createdAt", "asc"));
 
-    onSnapshot(q, (qsnapShop) => {
+    onSnapshot(q, (qSnapshot) => {
       let message = [];
-      qsnapShop.forEach((doc) => {
-        messages.push(doc.data());
+      qSnapshot.forEach((doc) => {
+        message.push(doc.data());
       });
       setMessages(message);
     });
+
+    // Check to see if there is a last message between the logged in user and the selected user
+    const docSnap = await getDoc(doc(db, "lastMessages", id));
+
+    // If the last message exist and is from the selected user update the message doc and set unread to false
+    if (docSnap.data() && docSnap().from !== user1) {
+      await updateDoc(doc(db, "lastMessages", id), {
+        unread: false,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -67,31 +98,30 @@ const Home = () => {
       media: url || "",
     });
 
+    await setDoc(doc(db, "lastMessages", id), {
+      text,
+      from: user1,
+      to: user2,
+      createdAt: Timestamp.fromDate(new Date()),
+      media: url || "",
+      unread: true,
+    });
+
     setText("");
   };
-
-  useEffect(() => {
-    const userRef = collection(db, "users");
-    // q entire user collection execpt current logged in user
-    const q = query(userRef, where("uid", "not-in", [user1]));
-
-    const snap = onSnapshot(q, (qSnapshot) =>
-      qSnapshot.forEach((doc) => {
-        let users = [];
-        users.push(doc.data());
-        setUsers(users);
-      })
-    );
-    return () => snap();
-    // eslint-disable-next-line
-  }, []);
 
   return (
     <div>
       <div className="home-container">
         <div className="users-container">
           {users.map((user) => (
-            <User key={user.uid} user={user} selectUser={selectUser} />
+            <User
+              key={user.uid}
+              user={user}
+              selectUser={selectUser}
+              user1={user1}
+              chat={chat}
+            />
           ))}
         </div>
         <div className="message-container">
@@ -103,7 +133,7 @@ const Home = () => {
               <div className="messages">
                 {messages.length
                   ? messages.map((message, i) => (
-                      <Message key={i} message={message} />
+                      <Message key={i} message={message} user1={user1} />
                     ))
                   : null}
               </div>
