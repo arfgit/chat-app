@@ -105,6 +105,7 @@ const Home = () => {
     });
 
     setText("");
+    setImg("");
   };
 
   return (
