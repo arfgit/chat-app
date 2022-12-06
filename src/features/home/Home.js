@@ -24,7 +24,6 @@ const Home = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState("");
   const [messages, setMessages] = useState([]);
-x
 
   const user1 = auth.currentUser.uid;
 
@@ -41,8 +40,6 @@ x
       });
     });
     return () => snap();
-
-    // eslint-disable-next-line
   }, []);
 
   const selectUser = async (user) => {

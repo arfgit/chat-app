@@ -14,8 +14,6 @@ const User = ({ user, selectUser, user1, chat }) => {
     });
 
     return () => snap();
-
-    // eslint-disable-next-line
   }, []);
 
   return (

@@ -47,7 +47,7 @@ const Profile = () => {
 
       uploadImg();
     }
-    // eslint-disable-next-line
+   
   }, [img]);
 
   return user ? (
