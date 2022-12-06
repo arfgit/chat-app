@@ -24,7 +24,7 @@ const Home = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState("");
   const [messages, setMessages] = useState([]);
-  console.log("👍", users);
+x
 
   const user1 = auth.currentUser.uid;
 
