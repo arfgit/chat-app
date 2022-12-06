@@ -36,6 +36,8 @@ const SignUp = () => {
 
       await setDoc(doc(db, "users", result.user.uid), {
         uid: result.user.uid,
+        profileImg:
+          "https://cdn.pixabay.com/photo/2015/07/09/19/32/dog-838281_960_720.jpg",
         name,
         email,
         createdAt: Timestamp.fromDate(new Date()),
