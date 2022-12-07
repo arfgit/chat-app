@@ -115,11 +115,24 @@ const Home = () => {
           });
         }
       });
-
-      console.log(predictions);
-
       setToxicity({ isToxic: true, labels });
-      console.log(toxicity);
+
+      await addDoc(collection(db, "messages", id, "chat"), {
+        text: "This user has sent an inappropriate message which has been blocked.",
+        from: user1,
+        to: user2,
+        createdAt: Timestamp.fromDate(new Date()),
+        media: url || "",
+      });
+
+      await setDoc(doc(db, "lastMessages", id), {
+        text: "This user has sent an inappropriate message which has been blocked.",
+        from: user1,
+        to: user2,
+        createdAt: Timestamp.fromDate(new Date()),
+        media: url || "",
+        unread: true,
+      });
     } else {
       if (img) {
         const imgRef = ref(
@@ -187,12 +200,7 @@ const Home = () => {
               <div className="messages">
                 {messages.length
                   ? messages.map((message, i) => (
-                      <Message
-                        key={i}
-                        message={message}
-                        user1={user1}
-                        loading={loading}
-                      />
+                      <Message key={i} message={message} user1={user1} />
                     ))
                   : null}
               </div>

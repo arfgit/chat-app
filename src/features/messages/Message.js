@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import Moment from "react-moment";
 
-const Message = ({ message, user1, loading }) => {
+const Message = ({ message, user1 }) => {
   const scrollRef = useRef();
 
   useEffect(() => {
@@ -11,7 +11,7 @@ const Message = ({ message, user1, loading }) => {
 
   return (
     <div
-      className={`message-wrapper ${message.from === user1 ? "own" : null}`}
+      className={`message-wrapper ${message.from === user1 ? "own" : ""}`}
       ref={scrollRef}
     >
       <p className={message.from === user1 ? "me" : "friend"}>

@@ -320,6 +320,10 @@ section .form {
   background: var(--color-6);
 }
 
+.toxic {
+  background: var(--color-5);
+}
+
 .selected-user {
   background: var(--color-6);
 }
