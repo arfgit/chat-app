@@ -19,8 +19,8 @@ const Navbar = () => {
 
   return (
     <nav>
-      <h2>
-        <Link to="/">chat-app</Link>
+      <h2 className="home">
+        <Link to="/">chit-chat</Link>
       </h2>
       <div>
         {user ? (

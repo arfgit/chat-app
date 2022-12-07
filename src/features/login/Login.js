@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, updateDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -47,6 +47,9 @@ const Login = () => {
   return (
     <section>
       <h3>Login</h3>
+      <div className="oops">
+        Don't have an account? <Link to="/signup">Sign Up</Link>
+      </div>
       <form className="form" onSubmit={handleSubmit}>
         <div className="input-container">
           <label htmlFor="email">Email</label>

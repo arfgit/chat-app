@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   collection,
   onSnapshot,
@@ -17,13 +17,22 @@ import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 import User from "../user/User";
 import { MessageForm } from "../messages/MessageForm";
 import Message from "../messages/Message";
+import * as tf from "@tensorflow/tfjs";
+import { load } from "@tensorflow-models/toxicity";
 
 const Home = () => {
+  /* Messenger States */
   const [users, setUsers] = useState([]);
   const [chat, setChat] = useState("");
   const [text, setText] = useState("");
   const [img, setImg] = useState("");
   const [messages, setMessages] = useState([]);
+
+  /* Tensorflow States */
+  const [loading, setLoading] = useState(false);
+  const [toxicity, setToxicity] = useState({ isToxic: false, labels: [] });
+
+  const model = useRef(null);
 
   const user1 = auth.currentUser.uid;
 
@@ -42,8 +51,20 @@ const Home = () => {
     return () => snap();
   }, []);
 
+  /* Load tf model */
+  useEffect(() => {
+    const loadModel = async () => {
+      const threshold = 0.9;
+      model.current = await load(threshold);
+      setLoading(false);
+    };
+
+    loadModel();
+  }, []);
+
   const selectUser = async (user) => {
     setChat(user);
+    setToxicity({ isToxic: false, labels: [] });
 
     const user2 = user.uid;
     const id = user1 > user2 ? `${user1 + user2}` : `${user2 + user1}`;
@@ -64,7 +85,7 @@ const Home = () => {
     const docSnap = await getDoc(doc(db, "lastMessages", id));
 
     // If the last message exist and is from the selected user update the message doc and set unread to false
-    if (docSnap.data() && docSnap().from !== user1) {
+    if (docSnap.data() && docSnap.data().from !== user1) {
       await updateDoc(doc(db, "lastMessages", id), {
         unread: false,
       });
@@ -77,32 +98,58 @@ const Home = () => {
     const id = user1 > user2 ? `${user1 + user2}` : `${user2 + user1}`;
     let url;
 
-    if (img) {
-      const imgRef = ref(
-        storage,
-        `images/${new Date().getTime()} - ${img.name}`
-      );
-      const snap = await uploadBytes(imgRef, img);
-      const dlUrl = await getDownloadURL(ref(storage, snap.ref.fullPath));
-      url = dlUrl;
+    setLoading(true);
+    const predictions = await model.current.classify(text);
+    setLoading(false);
+
+    const isToxic = predictions[6].results[0].match;
+
+    if (isToxic) {
+      const labels = [];
+      predictions.slice(0, 6).forEach((prediction) => {
+        if (prediction.results[0].match) {
+          labels.push({
+            label: prediction.label,
+            prob:
+              Math.round(prediction.results[0].probabilities[1] * 100) + "%",
+          });
+        }
+      });
+
+      console.log(predictions);
+
+      setToxicity({ isToxic: true, labels });
+      console.log(toxicity);
+    } else {
+      if (img) {
+        const imgRef = ref(
+          storage,
+          `images/${new Date().getTime()} - ${img.name}`
+        );
+        const snap = await uploadBytes(imgRef, img);
+        const dlUrl = await getDownloadURL(ref(storage, snap.ref.fullPath));
+        url = dlUrl;
+      }
+
+      await addDoc(collection(db, "messages", id, "chat"), {
+        text,
+        from: user1,
+        to: user2,
+        createdAt: Timestamp.fromDate(new Date()),
+        media: url || "",
+      });
+
+      await setDoc(doc(db, "lastMessages", id), {
+        text,
+        from: user1,
+        to: user2,
+        createdAt: Timestamp.fromDate(new Date()),
+        media: url || "",
+        unread: true,
+      });
+
+      setToxicity({ isToxic: false, labels: [] });
     }
-
-    await addDoc(collection(db, "messages", id, "chat"), {
-      text,
-      from: user1,
-      to: user2,
-      createdAt: Timestamp.fromDate(new Date()),
-      media: url || "",
-    });
-
-    await setDoc(doc(db, "lastMessages", id), {
-      text,
-      from: user1,
-      to: user2,
-      createdAt: Timestamp.fromDate(new Date()),
-      media: url || "",
-      unread: true,
-    });
 
     setText("");
     setImg("");
@@ -128,10 +175,24 @@ const Home = () => {
               <div className="message-user">
                 <h3>{chat.name}</h3>
               </div>
+              <div className="toxic-container">
+                {toxicity.isToxic &&
+                  toxicity.labels.map((label, i) => (
+                    <div key={i} className="error">
+                      {label.label + " " + label.prob}
+                    </div>
+                  ))}
+              </div>
+
               <div className="messages">
                 {messages.length
                   ? messages.map((message, i) => (
-                      <Message key={i} message={message} user1={user1} />
+                      <Message
+                        key={i}
+                        message={message}
+                        user1={user1}
+                        loading={loading}
+                      />
                     ))
                   : null}
               </div>
@@ -140,6 +201,7 @@ const Home = () => {
                 text={text}
                 setText={setText}
                 setImg={setImg}
+                loading={loading}
               />
             </>
           ) : (

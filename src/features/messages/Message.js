@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import Moment from "react-moment";
 
-const Message = ({ message, user1 }) => {
+const Message = ({ message, user1, loading }) => {
   const scrollRef = useRef();
 
   useEffect(() => {

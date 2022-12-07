@@ -1,7 +1,13 @@
 import React from "react";
 import Attachment from "./Attachment";
 
-export const MessageForm = ({ handleSubmit, text, setText, setImg }) => {
+export const MessageForm = ({
+  handleSubmit,
+  text,
+  setText,
+  setImg,
+  loading,
+}) => {
   return (
     <form className="message-form" onSubmit={handleSubmit}>
       <label htmlFor="img">
@@ -23,7 +29,7 @@ export const MessageForm = ({ handleSubmit, text, setText, setImg }) => {
         />
       </div>
       <div>
-        <button className="btn">Send</button>
+        <button className="btn">{loading ? "Checking.." : "Send"}</button>
       </div>
     </form>
   );
