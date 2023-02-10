@@ -8,7 +8,7 @@ Chit Chat is an app where users can message other logged-in users. The primary f
 - Firebase
 - Tensorflowjs
 
-### Run Build
+## Run Build
 
 - npm install
 - npm start
