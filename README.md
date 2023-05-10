@@ -1,6 +1,6 @@
 # Chit Chat
 
-<img src="./public/chitchat1.gif" width="958.5" height="479" alt="Chit Chat">
+![Chit Chat](./public/chitchat1.gif)
 
 Chit Chat is an app where users can message other logged-in users in real-time. The primary focus of this app is to block toxic messages using a filter.
 
